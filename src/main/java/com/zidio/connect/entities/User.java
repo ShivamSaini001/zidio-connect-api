@@ -15,26 +15,24 @@ import lombok.AllArgsConstructor;
 @Entity
 @Table(name = "users")
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userId;
-    private String name;
-    @Column(unique = true)
-    private String email;
-    private String password;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private String profileImageUrl;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long userId;
+	private String firstName;
+	private String lastName;
 
-    @OneToMany
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private List<Role> role;
+	@Column(unique = true)
+	private String email;
+	private String password;
+	private LocalDateTime createdAt;
+	private LocalDateTime updatedAt;
+	private String profileImageUrl;
 
-    @OneToOne
-    @JoinColumn(name = "profile_type")
-    private Role profileType;
+	@ManyToMany
+	@JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+	private List<Role> role;
+
+	@OneToOne
+	@JoinColumn(name = "profile_type")
+	private Role profileType;
 }

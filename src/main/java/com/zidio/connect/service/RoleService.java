@@ -8,6 +8,7 @@ public interface RoleService {
 
     public Role createRole(String name);
     public Role getRoleById(Long id);
+    public Role getRoleByName(String name);
     public List<Role> getAllRoles();
     public Role deleteRoleById(Long id);
     public Role updateRole(Long id, String name);

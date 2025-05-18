@@ -2,66 +2,74 @@ package com.zidio.connect.controller;
 
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.zidio.connect.entities.User;
+import com.zidio.connect.dto.OtpResponseDto;
+import com.zidio.connect.dto.UserRequestDTO;
+import com.zidio.connect.dto.UserResponseDTO;
 import com.zidio.connect.service.UserService;
 
+import jakarta.persistence.EntityExistsException;
+
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/v1/user")
 public class UserController {
 
+	@Autowired
 	UserService userService;
 
-	@PostMapping("/create")
-	public ResponseEntity<User> createNewUser(User user) {
-		User savedUser = userService.createUser(user);
-		return new ResponseEntity<User>(savedUser, HttpStatus.OK);
+	@PostMapping("/email/register-otp")
+	public ResponseEntity<?> sendOtp(@RequestParam("email") String userEmail) {
+		// It is used in send otp and re-send otp. so, no need to add extra code.
+		// If email already exists.
+		if (userService.isUserExists(userEmail)) {
+			throw new EntityExistsException("User with email " + userEmail + " already exists!!");
+		}
+		OtpResponseDto otpResponseDto = userService.otpToEmail(userEmail);
+		return ResponseEntity.ok(otpResponseDto);
+	}
+
+	@PostMapping("/register")
+	public ResponseEntity<UserResponseDTO> registerUser(UserRequestDTO userRequestDto) {
+		UserResponseDTO userResponseDto = userService.createUser(userRequestDto);
+		return ResponseEntity.ok(userResponseDto);
 	}
 
 	@DeleteMapping("/delete/id/{userId}")
-	public ResponseEntity<User> deleteUser(@PathVariable Long userId) {
-		User user = userService.getUserById(userId);
-		User deletedUser = userService.deleteUser(user);
-		return new ResponseEntity<User>(deletedUser, HttpStatus.OK);
+	public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
+		UserResponseDTO deletedUser = userService.deleteUserById(userId);
+		return ResponseEntity.ok(deletedUser);
 	}
 
 	@DeleteMapping("/delete/email/{emailId}")
-	public ResponseEntity<User> deleteUser(@PathVariable("emailId") String email) {
-		User user = userService.getUserByEmail(email);
-		User deletedUser = userService.deleteUser(user);
-		return new ResponseEntity<User>(deletedUser, HttpStatus.OK);
-	}
-
-	@PutMapping("/update")
-	public ResponseEntity<User> updateUser(User user) {
-		User updatedUser = userService.updateUser(user);
-		return new ResponseEntity<User>(updatedUser, HttpStatus.OK);
+	public ResponseEntity<?> deleteUser(@PathVariable("emailId") String email) {
+		UserResponseDTO deletedUser = userService.deleteUserByEmail(email);
+		return ResponseEntity.ok(deletedUser);
 	}
 
 	@GetMapping("/get/{userId}")
-	public ResponseEntity<User> getUserById(@PathVariable("userId") Long id) {
-		User user = userService.getUserById(id);
-		return new ResponseEntity<User>(user, HttpStatus.OK);
+	public ResponseEntity<?> getUserById(@PathVariable("userId") Long id) {
+		UserResponseDTO user = userService.getUserById(id);
+		return ResponseEntity.ok(user);
 	}
 
 	@GetMapping("/get/email/{emailId}")
-	public ResponseEntity<User> getUserByEmail(@PathVariable("emailId") String email) {
-		User user = userService.getUserByEmail(email);
-		return new ResponseEntity<User>(user, HttpStatus.OK);
+	public ResponseEntity<?> getUserByEmail(@PathVariable("emailId") String email) {
+		UserResponseDTO user = userService.getUserByEmail(email);
+		return ResponseEntity.ok(user);
 	}
 
 	@GetMapping("/get")
-	ResponseEntity<List<User>> getAllUsers() {
-		List<User> allUsers = userService.getAllUsers();
-		return new ResponseEntity<List<User>>(allUsers, HttpStatus.OK);
+	ResponseEntity<?> getAllUsers() {
+		List<UserResponseDTO> allUsers = userService.getAllUsers();
+		return ResponseEntity.ok(allUsers);
 	}
 }

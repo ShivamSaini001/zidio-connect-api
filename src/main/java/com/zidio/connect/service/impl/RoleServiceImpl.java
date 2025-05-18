@@ -18,21 +18,28 @@ public class RoleServiceImpl implements RoleService {
 
 	@Override
 	public Role createRole(String name) {
-		// If role already exists.
-		roleRepo.findAll().stream().forEach((role) -> {
-			if (role.getName().equals(name)) {
-				throw new EntityExistsException("Role '" + name + "' already exists!!");
-			}
+		String roleName = "ROLE_" + name.toUpperCase();
+		// If role does not exists.
+		roleRepo.findByName(roleName).orElseGet(() -> {
+			Role role = new Role();
+			role.setName(roleName);
+			return roleRepo.save(role);
 		});
-		Role role = new Role();
-		role.setName(name);
-		return roleRepo.save(role);
+		// If role already exists.
+		throw new EntityExistsException("Role '" + name + "' already exists!!");
 	}
 
 	@Override
 	public Role getRoleById(Long id) {
 		Role role = roleRepo.findById(id)
 				.orElseThrow(() -> new EntityNotFoundException("Role which id " + id + ", does not exist!!"));
+		return role;
+	}
+
+	@Override
+	public Role getRoleByName(String name) {
+		Role role = roleRepo.findByName(name)
+				.orElseThrow(() -> new EntityNotFoundException("Role which name " + name + ", does not exist!!"));
 		return role;
 	}
 
