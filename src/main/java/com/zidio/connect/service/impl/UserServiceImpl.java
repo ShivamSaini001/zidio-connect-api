@@ -10,11 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.zidio.connect.dto.OtpResponseDto;
-import com.zidio.connect.dto.UserRequestDTO;
-import com.zidio.connect.dto.UserResponseDTO;
+import com.zidio.connect.dto.RegistrationRequestDTO;
+import com.zidio.connect.dto.UserDto;
 import com.zidio.connect.entities.Role;
+import com.zidio.connect.entities.StudentProfile;
 import com.zidio.connect.entities.User;
-import com.zidio.connect.enums.RoleType;
+import com.zidio.connect.enums.RoleTypeEnum;
 import com.zidio.connect.repository.UserRepository;
 import com.zidio.connect.service.OTPService;
 import com.zidio.connect.service.RoleService;
@@ -39,29 +40,28 @@ public class UserServiceImpl implements UserService {
 	OTPService otpService;
 
 	@Override
-	public UserResponseDTO createUser(UserRequestDTO userRequestDto) {
-		if (userRequestDto != null) {
+	public UserDto createUser(RegistrationRequestDTO registrationRequestDto) {
+		if (registrationRequestDto != null) {
 			// If user already exists.
 			userRepo.findAll().stream().forEach((user) -> {
-				if (user.getEmail().equals(userRequestDto.getEmail())) {
+				if (user.getEmail().equals(registrationRequestDto.getEmail())) {
 					throw new EntityExistsException(
-							"User with email '" + userRequestDto.getEmail() + "' already exists!!");
+							"User with email '" + registrationRequestDto.getEmail() + "' already exists!!");
 				}
 			});
 
 			// Verify OTP
-			String otp = userRequestDto.getVerificationCode();
+			String otp = registrationRequestDto.getVerificationCode();
 
-			boolean verifyOtp = otpService.verifyOtp(userRequestDto.getEmail(), otp);
+			boolean verifyOtp = otpService.verifyOtp(registrationRequestDto.getEmail(), otp);
 			if (verifyOtp) {
-				// else
-				User newUser = modelMapper.map(userRequestDto, User.class);
+				User newUser = modelMapper.map(registrationRequestDto, User.class);
 				newUser.setCreatedAt(LocalDateTime.now());
 				newUser.setUpdatedAt(LocalDateTime.now());
 
 				// Assign profile type to user.
-				Role role = roleService.getRoleByName("ROLE_" + userRequestDto.getSelectedRole());
-				newUser.setProfileType(role);
+				Role role = roleService.getRoleByName("ROLE_" + registrationRequestDto.getSelectedRole());
+				newUser.setUserType(role);
 
 				// Assign roles to user.
 				List<Role> userRoles = this.getUserRoles(role);
@@ -70,12 +70,27 @@ public class UserServiceImpl implements UserService {
 				// Save User into DB.
 				User createdUser = userRepo.save(newUser);
 
-				UserResponseDTO userResponseDto = modelMapper.map(createdUser, UserResponseDTO.class);
-				userResponseDto.setRoleName(createdUser.getProfileType().getName());
+				// +++++++++++ Working +++++++++++++++++++++
+
+				// Creating user profile.
+
+//				StudentProfile studentProfile = new StudentProfile();
+//				studentProfile.setFirstName(otp);
+//				studentProfile.setLastName(otp);
+//				studentProfile.setUser(createdUser);
+
+				// Save User profile
+
+				// ++++++++++++++++++++++++++++++++++++++++++++++
+
+				UserDto userDto = modelMapper.map(createdUser, UserDto.class);
 
 				// clear user
 				otpService.clearUserDetails(createdUser.getEmail());
-				return userResponseDto;
+				return userDto;
+			}
+			else {
+				throw new EntityNotFoundException("Please verify your email before registration!!");
 			}
 		}
 		return null;
@@ -86,33 +101,33 @@ public class UserServiceImpl implements UserService {
 		List<Role> allRoles = roleService.getAllRoles();
 		List<Role> assignRoles = new ArrayList<>();
 
-		if (roleName.equals("ROLE_" + RoleType.ADMIN.toString())) {
+		if (roleName.equals("ROLE_" + RoleTypeEnum.ADMIN.toString())) {
 			allRoles.stream().forEach((r) -> {
-				if (r.getName().equals("ROLE_" + RoleType.ADMIN.toString())
-						|| r.getName().equals("ROLE_" + RoleType.RECRUITER.toString())
-						|| r.getName().equals("ROLE_" + RoleType.TEACHER.toString())
-						|| r.getName().equals("ROLE_" + RoleType.STUDENT.toString())) {
+				if (r.getName().equals("ROLE_" + RoleTypeEnum.ADMIN.toString())
+						|| r.getName().equals("ROLE_" + RoleTypeEnum.RECRUITER.toString())
+						|| r.getName().equals("ROLE_" + RoleTypeEnum.TEACHER.toString())
+						|| r.getName().equals("ROLE_" + RoleTypeEnum.STUDENT.toString())) {
 					assignRoles.add(r);
 				}
 			});
-		} else if (roleName.equals("ROLE_" + RoleType.RECRUITER.toString())) {
+		} else if (roleName.equals("ROLE_" + RoleTypeEnum.RECRUITER.toString())) {
 			allRoles.stream().forEach((r) -> {
-				if (r.getName().equals("ROLE_" + RoleType.RECRUITER.toString())
-						|| r.getName().equals("ROLE_" + RoleType.TEACHER.toString())
-						|| r.getName().equals("ROLE_" + RoleType.STUDENT.toString())) {
+				if (r.getName().equals("ROLE_" + RoleTypeEnum.RECRUITER.toString())
+						|| r.getName().equals("ROLE_" + RoleTypeEnum.TEACHER.toString())
+						|| r.getName().equals("ROLE_" + RoleTypeEnum.STUDENT.toString())) {
 					assignRoles.add(r);
 				}
 			});
-		} else if (roleName.equals("ROLE_" + RoleType.TEACHER.toString())) {
+		} else if (roleName.equals("ROLE_" + RoleTypeEnum.TEACHER.toString())) {
 			allRoles.stream().forEach((r) -> {
-				if (r.getName().equals("ROLE_" + RoleType.TEACHER.toString())
-						|| r.getName().equals("ROLE_" + RoleType.STUDENT.toString())) {
+				if (r.getName().equals("ROLE_" + RoleTypeEnum.TEACHER.toString())
+						|| r.getName().equals("ROLE_" + RoleTypeEnum.STUDENT.toString())) {
 					assignRoles.add(r);
 				}
 			});
-		} else if (roleName.equals("ROLE_" + RoleType.STUDENT.toString())) {
+		} else if (roleName.equals("ROLE_" + RoleTypeEnum.STUDENT.toString())) {
 			allRoles.stream().forEach((r) -> {
-				if (r.getName().equals("ROLE_" + RoleType.STUDENT.toString())) {
+				if (r.getName().equals("ROLE_" + RoleTypeEnum.STUDENT.toString())) {
 					assignRoles.add(r);
 				}
 			});
@@ -126,26 +141,23 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public UserResponseDTO deleteUserByEmail(String email) {
+	public UserDto deleteUserByEmail(String email) {
 		User user = userRepo.findByEmail(email)
 				.orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
 		if (user != null) {
 			userRepo.delete(user);
-			UserResponseDTO responseDTO = modelMapper.map(user, UserResponseDTO.class);
-			responseDTO.setRoleName(user.getProfileType().getName());
+			UserDto responseDTO = modelMapper.map(user, UserDto.class);
 			return responseDTO;
 		}
 		return null;
 	}
-	
+
 	@Override
-	public UserResponseDTO deleteUserById(Long id) {
-		User user = userRepo.findById(id)
-				.orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
+	public UserDto deleteUserById(Long id) {
+		User user = userRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
 		if (user != null) {
 			userRepo.delete(user);
-			UserResponseDTO responseDTO = modelMapper.map(user, UserResponseDTO.class);
-			responseDTO.setRoleName(user.getProfileType().getName());
+			UserDto responseDTO = modelMapper.map(user, UserDto.class);
 			return responseDTO;
 		}
 		return null;
@@ -169,19 +181,17 @@ public class UserServiceImpl implements UserService {
 //	}
 
 	@Override
-	public UserResponseDTO getUserById(Long id) {
+	public UserDto getUserById(Long id) {
 		User user = userRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
-		UserResponseDTO responseDTO = modelMapper.map(user, UserResponseDTO.class);
-		responseDTO.setRoleName(user.getProfileType().getName());
+		UserDto responseDTO = modelMapper.map(user, UserDto.class);
 		return responseDTO;
 	}
 
 	@Override
-	public UserResponseDTO getUserByEmail(String email) {
+	public UserDto getUserByEmail(String email) {
 		User user = userRepo.findByEmail(email)
 				.orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
-		UserResponseDTO responseDTO = modelMapper.map(user, UserResponseDTO.class);
-		responseDTO.setRoleName(user.getProfileType().getName());
+		UserDto responseDTO = modelMapper.map(user, UserDto.class);
 		return responseDTO;
 	}
 
@@ -191,10 +201,9 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public List<UserResponseDTO> getAllUsers() {
-		List<UserResponseDTO> users = userRepo.findAll().stream().map((user) -> {
-			UserResponseDTO responseDTO = modelMapper.map(user, UserResponseDTO.class);
-			responseDTO.setRoleName(user.getProfileType().getName());
+	public List<UserDto> getAllUsers() {
+		List<UserDto> users = userRepo.findAll().stream().map((user) -> {
+			UserDto responseDTO = modelMapper.map(user, UserDto.class);
 			return responseDTO;
 		}).collect(Collectors.toList());
 

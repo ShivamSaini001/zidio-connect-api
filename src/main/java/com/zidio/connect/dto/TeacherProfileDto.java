@@ -1,5 +1,7 @@
 package com.zidio.connect.dto;
 
+import java.time.LocalDate;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,13 +13,17 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class UserRequestDTO {
+public class TeacherProfileDto {
 
 	private String firstName;
 	private String lastName;
-	private String email;
-	private String password;
+	private String bio;
+	private String gender;
+	private String mobile;
+	private String specialization;
+	private String highestQualification;
+	private int yearOfExperience;
+	private LocalDate dateOfBirth;
 	private String profileImageUrl;
-	private String selectedRole;
-	private String verificationCode;
+	private UserDto userDto;
 }

@@ -1,0 +1,137 @@
+package com.zidio.connect.service.impl;
+
+import java.util.List;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.zidio.connect.dto.StudentProfileDto;
+import com.zidio.connect.dto.UserDto;
+import com.zidio.connect.entities.StudentProfile;
+import com.zidio.connect.entities.User;
+import com.zidio.connect.repository.StudentProfileRepository;
+import com.zidio.connect.repository.UserRepository;
+import com.zidio.connect.service.StudentProfileService;
+
+import jakarta.persistence.EntityExistsException;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
+
+@Service
+public class StudentProfileServiceImpl implements StudentProfileService {
+
+	@Autowired
+	StudentProfileRepository studentProfileRepo;
+
+	@Autowired
+	UserRepository userRepo;
+
+	@Autowired
+	ModelMapper modelMapper;
+
+	@Transactional
+	@Override
+	public StudentProfileDto createStudentProfile(StudentProfileDto profileDto, String email) {
+
+		User user = userRepo.findByEmail(email)
+				.orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
+
+		if (profileDto != null && user.getStudentProfile() == null) {
+			StudentProfile studentProfile = modelMapper.map(profileDto, StudentProfile.class);
+			// Setting properties of both entities.
+			studentProfile.setUser(user);
+			user.setStudentProfile(studentProfile);
+
+			// saving entities into db.
+			User savedUser = userRepo.save(user);
+			StudentProfile savedProfile = studentProfileRepo.save(studentProfile);
+
+			StudentProfileDto savedStudentProfileDto = modelMapper.map(savedProfile, StudentProfileDto.class);
+			savedStudentProfileDto.setUserDto(modelMapper.map(savedUser, UserDto.class));
+			return savedStudentProfileDto;
+		} else {
+			throw new EntityExistsException("Profile already exists!!");
+		}
+	}
+
+	@Override
+	public StudentProfileDto updateStudentProfile(StudentProfileDto profileDto, String email) {
+		// fetching student profile from database.
+		StudentProfile studentProfile = this.getStudentProfile(email);
+		// updating StudentProfile.
+		studentProfile.setFirstName(profileDto.getFirstName());
+		studentProfile.setLastName(profileDto.getLastName());
+		studentProfile.setBio(profileDto.getBio());
+		studentProfile.setDateOfBirth(profileDto.getDateOfBirth());
+		studentProfile.setGender(profileDto.getGender());
+		studentProfile.setMobile(profileDto.getMobile());
+		studentProfile.setLinkedInUrl(profileDto.getLinkedInUrl());
+		studentProfile.setResumeUrl(profileDto.getResumeUrl());
+		// update into database.
+		StudentProfile savedStudentProfile = studentProfileRepo.save(studentProfile);
+
+		StudentProfileDto studentProfileDto = modelMapper.map(savedStudentProfile, StudentProfileDto.class);
+		studentProfileDto.setUserDto(modelMapper.map(savedStudentProfile.getUser(), UserDto.class));
+		return studentProfileDto;
+	}
+
+	@Transactional
+	@Override
+	public void deleteStudentProfileByEmail(String email) {
+		// fetching student profile form db.
+		StudentProfile studentProfile = this.getStudentProfile(email);
+		// extracting user entity.
+		User user = studentProfile.getUser();
+		// updating user entity.
+		user.setStudentProfile(null);
+		userRepo.save(user);
+
+		// updating student profile.
+		studentProfile.setUser(null);
+		studentProfileRepo.save(studentProfile);
+
+		// Deleting Student profile.
+		studentProfileRepo.delete(studentProfile);
+	}
+
+	@Override
+	public StudentProfileDto getStudentProfileByEmail(String email) {
+		User user = userRepo.findByEmail(email)
+				.orElseThrow(() -> new EntityNotFoundException("Student does not exists!!"));
+		StudentProfile studentProfile = user.getStudentProfile();
+
+		StudentProfileDto studentProfileDto = modelMapper.map(studentProfile, StudentProfileDto.class);
+		studentProfileDto.setUserDto(modelMapper.map(user, UserDto.class));
+		return studentProfileDto;
+	}
+
+	@Override
+	public StudentProfileDto getStudentProfileById(Long profileId) {
+		StudentProfile studentProfile = studentProfileRepo.findById(profileId)
+				.orElseThrow(() -> new EntityNotFoundException("Profile does not exists..."));
+		User user = studentProfile.getUser();
+		// Convert Entities into DTO.
+		StudentProfileDto studentProfileDto = modelMapper.map(studentProfile, StudentProfileDto.class);
+		UserDto userDto = modelMapper.map(user, UserDto.class);
+		studentProfileDto.setUserDto(userDto);
+		return studentProfileDto;
+	}
+
+	@Override
+	public List<StudentProfileDto> getAllStudentProfiles() {
+		return studentProfileRepo.findAll().stream().map((studentProfile) -> {
+			StudentProfileDto studentProfileDto = modelMapper.map(studentProfile, StudentProfileDto.class);
+			UserDto userDto = modelMapper.map(studentProfile.getUser(), UserDto.class);
+			studentProfileDto.setUserDto(userDto);
+			return studentProfileDto;
+		}).toList();
+	}
+
+	private StudentProfile getStudentProfile(String email) {
+		User user = userRepo.findByEmail(email)
+				.orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
+		return user.getStudentProfile();
+	}
+
+}

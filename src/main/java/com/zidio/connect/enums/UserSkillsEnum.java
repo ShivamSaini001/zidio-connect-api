@@ -1,0 +1,7 @@
+package com.zidio.connect.enums;
+
+public enum UserSkillsEnum {
+
+	JAVA, PYTHON, JAVASCRIPT, TYPESCRIPT, REACT, ANGULAR, SPRING_BOOT, NODE_JS, HTML, CSS, SQL, MONGODB, AWS, DOCKER,
+	KUBERNETES, GIT, FIGMA, NEXT_JS, EXPRESS_JS
+}

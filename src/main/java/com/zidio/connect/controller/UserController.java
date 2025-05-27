@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.zidio.connect.dto.OtpResponseDto;
-import com.zidio.connect.dto.UserRequestDTO;
-import com.zidio.connect.dto.UserResponseDTO;
+import com.zidio.connect.dto.RegistrationRequestDTO;
+import com.zidio.connect.dto.UserDto;
 import com.zidio.connect.service.UserService;
 
 import jakarta.persistence.EntityExistsException;
@@ -38,38 +38,38 @@ public class UserController {
 	}
 
 	@PostMapping("/register")
-	public ResponseEntity<UserResponseDTO> registerUser(UserRequestDTO userRequestDto) {
-		UserResponseDTO userResponseDto = userService.createUser(userRequestDto);
+	public ResponseEntity<UserDto> registerUser(RegistrationRequestDTO registrationRequestDto) {
+		UserDto userResponseDto = userService.createUser(registrationRequestDto);
 		return ResponseEntity.ok(userResponseDto);
 	}
 
 	@DeleteMapping("/delete/id/{userId}")
 	public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
-		UserResponseDTO deletedUser = userService.deleteUserById(userId);
+		UserDto deletedUser = userService.deleteUserById(userId);
 		return ResponseEntity.ok(deletedUser);
 	}
 
 	@DeleteMapping("/delete/email/{emailId}")
 	public ResponseEntity<?> deleteUser(@PathVariable("emailId") String email) {
-		UserResponseDTO deletedUser = userService.deleteUserByEmail(email);
+		UserDto deletedUser = userService.deleteUserByEmail(email);
 		return ResponseEntity.ok(deletedUser);
 	}
 
 	@GetMapping("/get/{userId}")
 	public ResponseEntity<?> getUserById(@PathVariable("userId") Long id) {
-		UserResponseDTO user = userService.getUserById(id);
+		UserDto user = userService.getUserById(id);
 		return ResponseEntity.ok(user);
 	}
 
 	@GetMapping("/get/email/{emailId}")
 	public ResponseEntity<?> getUserByEmail(@PathVariable("emailId") String email) {
-		UserResponseDTO user = userService.getUserByEmail(email);
+		UserDto user = userService.getUserByEmail(email);
 		return ResponseEntity.ok(user);
 	}
 
 	@GetMapping("/get")
 	ResponseEntity<?> getAllUsers() {
-		List<UserResponseDTO> allUsers = userService.getAllUsers();
+		List<UserDto> allUsers = userService.getAllUsers();
 		return ResponseEntity.ok(allUsers);
 	}
 }

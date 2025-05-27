@@ -1,8 +1,8 @@
 package com.zidio.connect.enums;
 
-public enum RoleType {
+public enum RoleTypeEnum {
     ADMIN,
     STUDENT,
     TEACHER,
-    RECRUITER
+    RECRUITER,
 }
