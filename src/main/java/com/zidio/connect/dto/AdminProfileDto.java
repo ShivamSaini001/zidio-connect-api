@@ -21,4 +21,6 @@ public class AdminProfileDto {
 	private String mobile;
 	private String gender;
 	private LocalDate dateOfBirth;
+	private String profileImageUrl;
+	private UserDto userDto;
 }

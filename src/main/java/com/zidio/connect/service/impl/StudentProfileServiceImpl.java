@@ -37,15 +37,19 @@ public class StudentProfileServiceImpl implements StudentProfileService {
 		User user = userRepo.findByEmail(email)
 				.orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
 
-		if (profileDto != null && user.getStudentProfile() == null) {
-			StudentProfile studentProfile = modelMapper.map(profileDto, StudentProfile.class);
-			// Setting properties of both entities.
-			studentProfile.setUser(user);
-			user.setStudentProfile(studentProfile);
+		if (profileDto == null) {
+			throw new RuntimeException("Please provide profile details!!");
+		}
 
-			// saving entities into db.
-			User savedUser = userRepo.save(user);
+		if (user.getStudentProfile() == null) {
+			StudentProfile studentProfile = modelMapper.map(profileDto, StudentProfile.class);
+			// Creating Teacher profile
+			studentProfile.setUser(user);
 			StudentProfile savedProfile = studentProfileRepo.save(studentProfile);
+
+			// updating User entity into database.
+			user.setStudentProfile(savedProfile);
+			User savedUser = userRepo.save(user);
 
 			StudentProfileDto savedStudentProfileDto = modelMapper.map(savedProfile, StudentProfileDto.class);
 			savedStudentProfileDto.setUserDto(modelMapper.map(savedUser, UserDto.class));
@@ -59,6 +63,11 @@ public class StudentProfileServiceImpl implements StudentProfileService {
 	public StudentProfileDto updateStudentProfile(StudentProfileDto profileDto, String email) {
 		// fetching student profile from database.
 		StudentProfile studentProfile = this.getStudentProfile(email);
+		
+		if(studentProfile == null) {
+			throw new EntityNotFoundException("Student profile does not exists.");
+		}
+		
 		// updating StudentProfile.
 		studentProfile.setFirstName(profileDto.getFirstName());
 		studentProfile.setLastName(profileDto.getLastName());
@@ -81,6 +90,12 @@ public class StudentProfileServiceImpl implements StudentProfileService {
 	public void deleteStudentProfileByEmail(String email) {
 		// fetching student profile form db.
 		StudentProfile studentProfile = this.getStudentProfile(email);
+		
+		// If student profile does not exists.
+		if (studentProfile == null) {
+			throw new EntityNotFoundException("Student profile does not exists.");
+		}
+		
 		// extracting user entity.
 		User user = studentProfile.getUser();
 		// updating user entity.

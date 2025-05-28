@@ -36,15 +36,19 @@ public class TeacherProfileServiceImpl implements TeacherProfileService {
 		User user = userRepo.findByEmail(email)
 				.orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
 
-		if (profileDto != null && user.getTeacherProfile() == null) {
-			TeacherProfile teacherProfile = modelMapper.map(profileDto, TeacherProfile.class);
-			// Setting properties of both entities.
-			teacherProfile.setUser(user);
-			user.setTeacherProfile(teacherProfile);
+		if (profileDto == null) {
+			throw new RuntimeException("Please provide profile details!!");
+		}
 
-			// saving entities into db.
-			User savedUser = userRepo.save(user);
+		if (user.getTeacherProfile() == null) {
+			TeacherProfile teacherProfile = modelMapper.map(profileDto, TeacherProfile.class);
+			// Creating Teacher profile
+			teacherProfile.setUser(user);
 			TeacherProfile savedTeacherProfile = teacherProfileRepo.save(teacherProfile);
+
+			// updating User entity into database.
+			user.setTeacherProfile(savedTeacherProfile);
+			User savedUser = userRepo.save(user);
 
 			TeacherProfileDto savedTeacherProfileDto = modelMapper.map(savedTeacherProfile, TeacherProfileDto.class);
 			savedTeacherProfileDto.setUserDto(modelMapper.map(savedUser, UserDto.class));
@@ -58,7 +62,11 @@ public class TeacherProfileServiceImpl implements TeacherProfileService {
 	public TeacherProfileDto updateTeacherProfile(TeacherProfileDto profileDto, String email) {
 		// fetching teacher profile from database.
 		TeacherProfile teacherProfile = this.getTeacherProfile(email);
-
+		
+		if(teacherProfile == null) {
+			throw new EntityNotFoundException("Teacher profile does not exists.");
+		}
+		
 		// updating TeacherProfile.
 		teacherProfile.setFirstName(profileDto.getFirstName());
 		teacherProfile.setLastName(profileDto.getLastName());
@@ -82,8 +90,15 @@ public class TeacherProfileServiceImpl implements TeacherProfileService {
 	public void deleteTeacherProfileByEmail(String email) {
 		// fetching teacher profile form db.
 		TeacherProfile teacherProfile = this.getTeacherProfile(email);
+		
+		// If teacher profile does not exists.
+		if (teacherProfile == null) {
+			throw new EntityNotFoundException("Teacher profile does not exists.");
+		}
+		
 		// extracting user entity.
 		User user = teacherProfile.getUser();
+		
 		// updating user entity.
 		user.setTeacherProfile(null);
 		userRepo.save(user);

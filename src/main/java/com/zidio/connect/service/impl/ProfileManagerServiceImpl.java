@@ -9,9 +9,9 @@ import com.zidio.connect.entities.RecruiterProfile;
 import com.zidio.connect.entities.StudentProfile;
 import com.zidio.connect.entities.TeacherProfile;
 import com.zidio.connect.entities.User;
-import com.zidio.connect.service.ProfileService;
+import com.zidio.connect.service.ProfileManagerService;
 
-public class ProfileServiceImpl implements ProfileService {
+public class ProfileManagerServiceImpl implements ProfileManagerService {
 
 	@Override
 	public AdminProfileDto createProfile(AdminProfile adminProfile, User user) {

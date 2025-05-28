@@ -24,4 +24,6 @@ public class RecruiterProfileDto {
 	private long totalPostedJobs;
 	private long totalPostedInternships;
 	private String designation; // Hr Manager, Technical Recruiter
+	private String profileImageUrl;
+	private UserDto userDto;
 }

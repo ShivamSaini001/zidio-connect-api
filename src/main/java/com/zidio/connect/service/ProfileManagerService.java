@@ -10,7 +10,7 @@ import com.zidio.connect.entities.StudentProfile;
 import com.zidio.connect.entities.TeacherProfile;
 import com.zidio.connect.entities.User;
 
-public interface ProfileService {
+public interface ProfileManagerService {
 
 	AdminProfileDto createProfile(AdminProfile adminProfile, User user);
 	RecruiterProfileDto createProfile(RecruiterProfile recruiterProfile, User user);
