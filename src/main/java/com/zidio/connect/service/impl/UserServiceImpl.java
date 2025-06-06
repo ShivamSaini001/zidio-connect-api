@@ -12,10 +12,17 @@ import org.springframework.stereotype.Service;
 import com.zidio.connect.dto.OtpResponseDto;
 import com.zidio.connect.dto.RegistrationRequestDTO;
 import com.zidio.connect.dto.UserDto;
+import com.zidio.connect.entities.AdminProfile;
+import com.zidio.connect.entities.RecruiterProfile;
 import com.zidio.connect.entities.Role;
 import com.zidio.connect.entities.StudentProfile;
+import com.zidio.connect.entities.TeacherProfile;
 import com.zidio.connect.entities.User;
 import com.zidio.connect.enums.RoleTypeEnum;
+import com.zidio.connect.repository.AdminProfileRepository;
+import com.zidio.connect.repository.RecruiterProfileRepository;
+import com.zidio.connect.repository.StudentProfileRepository;
+import com.zidio.connect.repository.TeacherProfileRepository;
 import com.zidio.connect.repository.UserRepository;
 import com.zidio.connect.service.OTPService;
 import com.zidio.connect.service.RoleService;
@@ -28,16 +35,28 @@ import jakarta.persistence.EntityNotFoundException;
 public class UserServiceImpl implements UserService {
 
 	@Autowired
-	UserRepository userRepo;
+	private UserRepository userRepo;
 
 	@Autowired
-	RoleService roleService;
+	private RoleService roleService;
 
 	@Autowired
-	ModelMapper modelMapper;
+	private ModelMapper modelMapper;
 
 	@Autowired
-	OTPService otpService;
+	private OTPService otpService;
+
+	@Autowired
+	private AdminProfileRepository adminProfileRepo;
+
+	@Autowired
+	private RecruiterProfileRepository recruiterProfileRepo;
+
+	@Autowired
+	private TeacherProfileRepository teacherProfileRepo;
+
+	@Autowired
+	private StudentProfileRepository studentProfileRepos;
 
 	@Override
 	public UserDto createUser(RegistrationRequestDTO registrationRequestDto) {
@@ -60,7 +79,7 @@ public class UserServiceImpl implements UserService {
 				newUser.setUpdatedAt(LocalDateTime.now());
 
 				// Assign profile type to user.
-				Role role = roleService.getRoleByName("ROLE_" + registrationRequestDto.getSelectedRole());
+				Role role = roleService.getRoleByName("ROLE_" + registrationRequestDto.getSelectedRole().toUpperCase());
 				newUser.setUserType(role);
 
 				// Assign roles to user.
@@ -70,26 +89,40 @@ public class UserServiceImpl implements UserService {
 				// Save User into DB.
 				User createdUser = userRepo.save(newUser);
 
-				// +++++++++++ Working +++++++++++++++++++++
-
 				// Creating user profile.
+				RoleTypeEnum roleType = RoleTypeEnum.valueOf(role.getName().replace("ROLE_", ""));
+				String firstName = registrationRequestDto.getFirstName();
+				String lastName = registrationRequestDto.getLastName();
 
-//				StudentProfile studentProfile = new StudentProfile();
-//				studentProfile.setFirstName(otp);
-//				studentProfile.setLastName(otp);
-//				studentProfile.setUser(createdUser);
+				switch (roleType) {
+				case ADMIN:
+					AdminProfile adminProfile = new AdminProfile(firstName, lastName, createdUser);
+					createdUser.setAdminProfile(adminProfileRepo.save(adminProfile));
+					break;
 
-				// Save User profile
+				case RECRUITER:
+					RecruiterProfile recruiterProfile = new RecruiterProfile(firstName, lastName, createdUser);
+					createdUser.setRecruiterProfile(recruiterProfileRepo.save(recruiterProfile));
+					break;
+				case TEACHER:
+					TeacherProfile teacherProfile = new TeacherProfile(firstName, lastName, createdUser);
+					createdUser.setTeacherProfile(teacherProfileRepo.save(teacherProfile));
+					break;
+				case STUDENT:
+					StudentProfile studentProfile = new StudentProfile(firstName, lastName, createdUser);
+					createdUser.setStudentProfile(studentProfileRepos.save(studentProfile));
+					break;
+				}
 
-				// ++++++++++++++++++++++++++++++++++++++++++++++
+				// Update User into DB.
+				createdUser = userRepo.save(createdUser);
 
 				UserDto userDto = modelMapper.map(createdUser, UserDto.class);
 
 				// clear user
 				otpService.clearUserDetails(createdUser.getEmail());
 				return userDto;
-			}
-			else {
+			} else {
 				throw new EntityNotFoundException("Please verify your email before registration!!");
 			}
 		}
@@ -144,41 +177,18 @@ public class UserServiceImpl implements UserService {
 	public UserDto deleteUserByEmail(String email) {
 		User user = userRepo.findByEmail(email)
 				.orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
-		if (user != null) {
-			userRepo.delete(user);
-			UserDto responseDTO = modelMapper.map(user, UserDto.class);
-			return responseDTO;
-		}
-		return null;
+		userRepo.delete(user);
+		UserDto responseDTO = modelMapper.map(user, UserDto.class);
+		return responseDTO;
 	}
 
 	@Override
 	public UserDto deleteUserById(Long id) {
 		User user = userRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
-		if (user != null) {
-			userRepo.delete(user);
-			UserDto responseDTO = modelMapper.map(user, UserDto.class);
-			return responseDTO;
-		}
-		return null;
+		userRepo.delete(user);
+		UserDto responseDTO = modelMapper.map(user, UserDto.class);
+		return responseDTO;
 	}
-
-//	@Override
-//	public UserResponseDTO updateUser(User updatedUser) {
-//
-//		if (updatedUser != null) {
-//			// Get user from db.
-//			User user = this.getUserById(updatedUser.getUserId());
-//			// Update user details.
-//			user.setName(updatedUser.getName());
-//			user.setEmail(updatedUser.getEmail());
-//			user.setProfileImageUrl(updatedUser.getProfileImageUrl());
-//			user.setUpdatedAt(LocalDateTime.now());
-//			userRepo.save(user);
-//			return user;
-//		}
-//		return null;
-//	}
 
 	@Override
 	public UserDto getUserById(Long id) {
@@ -206,7 +216,6 @@ public class UserServiceImpl implements UserService {
 			UserDto responseDTO = modelMapper.map(user, UserDto.class);
 			return responseDTO;
 		}).collect(Collectors.toList());
-
 		return users;
 	}
 

@@ -35,4 +35,12 @@ public class AdminProfile {
 	@MapsId
 	@JoinColumn(name = "userId")
 	private User user;
+
+	public AdminProfile(String firstName, String lastName, User user) {
+		super();
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.user = user;
+	}
+	
 }

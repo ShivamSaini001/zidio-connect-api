@@ -13,7 +13,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class RecruiterProfileDto {
+public class RecruiterProfileDto implements ProfileDto{
 
 	private String firstName;
 	private String lastName;

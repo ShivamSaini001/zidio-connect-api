@@ -38,4 +38,12 @@ public class TeacherProfile {
 	@MapsId
 	@JoinColumn(name = "userId")
 	private User user;
+
+	public TeacherProfile(String firstName, String lastName, User user) {
+		super();
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.user = user;
+	}
+	
 }

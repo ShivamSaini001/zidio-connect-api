@@ -37,4 +37,12 @@ public class StudentProfile {
 	@MapsId
 	@JoinColumn(name = "userId", nullable = true)
 	private User user;
+
+	public StudentProfile(String firstName, String lastName, User user) {
+		super();
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.user = user;
+	}
+	
 }

@@ -17,7 +17,6 @@ public class RegistrationRequestDTO {
 	private String lastName;
 	private String email;
 	private String password;
-	private String profileImageUrl;
 	private String selectedRole;
 	private String verificationCode;
 }

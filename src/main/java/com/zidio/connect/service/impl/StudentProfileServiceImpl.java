@@ -116,6 +116,10 @@ public class StudentProfileServiceImpl implements StudentProfileService {
 				.orElseThrow(() -> new EntityNotFoundException("Student does not exists!!"));
 		StudentProfile studentProfile = user.getStudentProfile();
 
+		if(studentProfile == null) {
+			throw new EntityNotFoundException("Profile does not exists!!");
+		}
+		
 		StudentProfileDto studentProfileDto = modelMapper.map(studentProfile, StudentProfileDto.class);
 		studentProfileDto.setUserDto(modelMapper.map(user, UserDto.class));
 		return studentProfileDto;

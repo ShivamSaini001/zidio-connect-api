@@ -118,6 +118,11 @@ public class TeacherProfileServiceImpl implements TeacherProfileService {
 				.orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
 		// Get teacher profile
 		TeacherProfile teacherProfile = user.getTeacherProfile();
+		
+		if(teacherProfile == null) {
+			throw new EntityNotFoundException("Profile does not exists!!");
+		}
+		
 		// Convert teacher profile.
 		TeacherProfileDto teacherProfileDto = modelMapper.map(teacherProfile, TeacherProfileDto.class);
 		teacherProfileDto.setUserDto(modelMapper.map(user, UserDto.class));

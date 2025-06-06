@@ -99,7 +99,7 @@ public class RecruiterProfileServiceImpl implements RecruiterProfileService {
 		}
 		// extracting user entity.
 		User user = recruiterProfile.getUser();
-		
+
 		// updating user entity.
 		user.setRecruiterProfile(null);
 		userRepo.save(user);
@@ -119,6 +119,11 @@ public class RecruiterProfileServiceImpl implements RecruiterProfileService {
 				.orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
 		// Get recruiter profile
 		RecruiterProfile recruiterProfile = user.getRecruiterProfile();
+
+		if (recruiterProfile == null) {
+			throw new EntityNotFoundException("Profile does not exists!!");
+		}
+
 		// Convert recruiter profile.
 		RecruiterProfileDto recruiterProfileDto = modelMapper.map(recruiterProfile, RecruiterProfileDto.class);
 		recruiterProfileDto.setUserDto(modelMapper.map(user, UserDto.class));

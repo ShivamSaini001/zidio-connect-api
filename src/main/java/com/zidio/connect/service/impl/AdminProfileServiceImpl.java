@@ -116,6 +116,11 @@ public class AdminProfileServiceImpl implements AdminProfileService {
 				.orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
 		// Get admin profile
 		AdminProfile adminProfile = user.getAdminProfile();
+		
+		if (adminProfile == null) {
+			throw new EntityNotFoundException("Profile does not exists!!");
+		}
+		
 		// Convert admin profile.
 		AdminProfileDto adminProfileDto = modelMapper.map(adminProfile, AdminProfileDto.class);
 		adminProfileDto.setUserDto(modelMapper.map(user, UserDto.class));
