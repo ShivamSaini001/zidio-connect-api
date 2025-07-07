@@ -4,18 +4,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import com.zidio.connect.entities.Role;
+import com.zidio.connect.entities.UserAuthority;
 import com.zidio.connect.entities.Skill;
-import com.zidio.connect.enums.RoleTypeEnum;
+import com.zidio.connect.enums.AuthorityTypeEnum;
 import com.zidio.connect.enums.UserSkillsEnum;
-import com.zidio.connect.repository.RoleRepository;
+import com.zidio.connect.repository.UserAuthorityRepository;
 import com.zidio.connect.repository.SkillRepository;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
 
 	@Autowired
-	private RoleRepository roleRepository;
+	private UserAuthorityRepository userAuthorityRepository;
 
 	@Autowired
 	private SkillRepository skillRepository;
@@ -27,12 +27,10 @@ public class DataInitializer implements CommandLineRunner {
 	}
 
 	public void initilizeRoles() {
-		for (RoleTypeEnum roleType : RoleTypeEnum.values()) {
-			String roleName = "ROLE_" + roleType.toString().toUpperCase();
-			roleRepository.findByName(roleName).orElseGet(() -> {
-				Role role = new Role();
-				role.setName(roleName);
-				return roleRepository.save(role);
+		for (AuthorityTypeEnum roleType : AuthorityTypeEnum.values()) {
+			String authority = "ROLE_" + roleType.toString().toUpperCase();
+			userAuthorityRepository.findByAuthority(authority).orElseGet(() -> {
+				return userAuthorityRepository.save(new UserAuthority(authority));
 			});
 		}
 		System.out.println("Predefined roles initialized...");

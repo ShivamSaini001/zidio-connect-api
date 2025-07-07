@@ -7,25 +7,44 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.zidio.connect.config.security.jwt.JwtHelper;
+import com.zidio.connect.config.security.jwt.dto.JwtLoginRequest;
+import com.zidio.connect.config.security.jwt.dto.JwtLoginResponse;
+import com.zidio.connect.dto.AdminProfileDto;
 import com.zidio.connect.dto.OtpResponseDto;
+import com.zidio.connect.dto.RecruiterProfileDto;
 import com.zidio.connect.dto.RegistrationRequestDTO;
+import com.zidio.connect.dto.StudentProfileDto;
+import com.zidio.connect.dto.TeacherProfileDto;
 import com.zidio.connect.dto.UserDto;
 import com.zidio.connect.entities.AdminProfile;
 import com.zidio.connect.entities.RecruiterProfile;
-import com.zidio.connect.entities.Role;
 import com.zidio.connect.entities.StudentProfile;
 import com.zidio.connect.entities.TeacherProfile;
 import com.zidio.connect.entities.User;
-import com.zidio.connect.enums.RoleTypeEnum;
+import com.zidio.connect.entities.UserAuthority;
+import com.zidio.connect.enums.AuthorityTypeEnum;
+import com.zidio.connect.exception.CustomException;
 import com.zidio.connect.repository.AdminProfileRepository;
 import com.zidio.connect.repository.RecruiterProfileRepository;
 import com.zidio.connect.repository.StudentProfileRepository;
 import com.zidio.connect.repository.TeacherProfileRepository;
 import com.zidio.connect.repository.UserRepository;
 import com.zidio.connect.service.OTPService;
-import com.zidio.connect.service.RoleService;
+import com.zidio.connect.service.ProfileManagerService;
+import com.zidio.connect.service.UserAuthorityService;
 import com.zidio.connect.service.UserService;
 
 import jakarta.persistence.EntityExistsException;
@@ -34,29 +53,41 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class UserServiceImpl implements UserService {
 
-	@Autowired
 	private UserRepository userRepo;
-
-	@Autowired
-	private RoleService roleService;
-
-	@Autowired
+	private UserAuthorityService userAuthorityService;
 	private ModelMapper modelMapper;
-
-	@Autowired
 	private OTPService otpService;
-
-	@Autowired
 	private AdminProfileRepository adminProfileRepo;
-
-	@Autowired
 	private RecruiterProfileRepository recruiterProfileRepo;
-
-	@Autowired
 	private TeacherProfileRepository teacherProfileRepo;
-
-	@Autowired
 	private StudentProfileRepository studentProfileRepos;
+	private ProfileManagerService profileManagerService;
+	private BCryptPasswordEncoder passwordEncoder;
+	private JwtHelper jwtHelper;
+	@Autowired
+	@Lazy
+	private AuthenticationManager authenticationManager;
+
+	// Constructor
+	@Lazy
+	public UserServiceImpl(UserRepository userRepo, UserAuthorityService userAuthorityService, ModelMapper modelMapper,
+			OTPService otpService, AdminProfileRepository adminProfileRepo,
+			RecruiterProfileRepository recruiterProfileRepo, TeacherProfileRepository teacherProfileRepo,
+			StudentProfileRepository studentProfileRepos, ProfileManagerService profileManagerService,
+			BCryptPasswordEncoder passwordEncoder, JwtHelper jwtHelper) {
+
+		this.userRepo = userRepo;
+		this.userAuthorityService = userAuthorityService;
+		this.modelMapper = modelMapper;
+		this.otpService = otpService;
+		this.adminProfileRepo = adminProfileRepo;
+		this.recruiterProfileRepo = recruiterProfileRepo;
+		this.teacherProfileRepo = teacherProfileRepo;
+		this.studentProfileRepos = studentProfileRepos;
+		this.profileManagerService = profileManagerService;
+		this.passwordEncoder = passwordEncoder;
+		this.jwtHelper = jwtHelper;
+	}
 
 	@Override
 	public UserDto createUser(RegistrationRequestDTO registrationRequestDto) {
@@ -79,18 +110,24 @@ public class UserServiceImpl implements UserService {
 				newUser.setUpdatedAt(LocalDateTime.now());
 
 				// Assign profile type to user.
-				Role role = roleService.getRoleByName("ROLE_" + registrationRequestDto.getSelectedRole().toUpperCase());
-				newUser.setUserType(role);
+				UserAuthority userAuthority = userAuthorityService
+						.getAuthorityByName("ROLE_" + registrationRequestDto.getSelectedRole().toUpperCase());
+				newUser.setUserType(userAuthority);
 
 				// Assign roles to user.
-				List<Role> userRoles = this.getUserRoles(role);
-				newUser.setRole(userRoles);
+				List<UserAuthority> userAuthorities = this.getUserAuthorities(userAuthority);
+				newUser.setAuthorities(userAuthorities);
+
+				// Encrypt user password.
+				String encodedPassword = passwordEncoder.encode(newUser.getPassword());
+				newUser.setPassword(encodedPassword);
 
 				// Save User into DB.
 				User createdUser = userRepo.save(newUser);
 
 				// Creating user profile.
-				RoleTypeEnum roleType = RoleTypeEnum.valueOf(role.getName().replace("ROLE_", ""));
+				AuthorityTypeEnum roleType = AuthorityTypeEnum
+						.valueOf(userAuthority.getAuthority().replace("ROLE_", ""));
 				String firstName = registrationRequestDto.getFirstName();
 				String lastName = registrationRequestDto.getLastName();
 
@@ -129,48 +166,108 @@ public class UserServiceImpl implements UserService {
 		return null;
 	}
 
-	public List<Role> getUserRoles(Role role) {
-		String roleName = role.getName();
-		List<Role> allRoles = roleService.getAllRoles();
-		List<Role> assignRoles = new ArrayList<>();
+	public List<UserAuthority> getUserAuthorities(UserAuthority userAuthority) {
+		String authorityName = userAuthority.getAuthority();
+		List<UserAuthority> allAuthorities = userAuthorityService.getAllAuthorities();
+		List<UserAuthority> assignAuthorities = new ArrayList<>();
 
-		if (roleName.equals("ROLE_" + RoleTypeEnum.ADMIN.toString())) {
-			allRoles.stream().forEach((r) -> {
-				if (r.getName().equals("ROLE_" + RoleTypeEnum.ADMIN.toString())
-						|| r.getName().equals("ROLE_" + RoleTypeEnum.RECRUITER.toString())
-						|| r.getName().equals("ROLE_" + RoleTypeEnum.TEACHER.toString())
-						|| r.getName().equals("ROLE_" + RoleTypeEnum.STUDENT.toString())) {
-					assignRoles.add(r);
+		if (authorityName.equals("ROLE_" + AuthorityTypeEnum.ADMIN.toString())) {
+			allAuthorities.stream().forEach((r) -> {
+				if (r.getAuthority().equals("ROLE_" + AuthorityTypeEnum.ADMIN.toString())
+						|| r.getAuthority().equals("ROLE_" + AuthorityTypeEnum.RECRUITER.toString())
+						|| r.getAuthority().equals("ROLE_" + AuthorityTypeEnum.TEACHER.toString())
+						|| r.getAuthority().equals("ROLE_" + AuthorityTypeEnum.STUDENT.toString())) {
+					assignAuthorities.add(r);
 				}
 			});
-		} else if (roleName.equals("ROLE_" + RoleTypeEnum.RECRUITER.toString())) {
-			allRoles.stream().forEach((r) -> {
-				if (r.getName().equals("ROLE_" + RoleTypeEnum.RECRUITER.toString())
-						|| r.getName().equals("ROLE_" + RoleTypeEnum.TEACHER.toString())
-						|| r.getName().equals("ROLE_" + RoleTypeEnum.STUDENT.toString())) {
-					assignRoles.add(r);
+		} else if (authorityName.equals("ROLE_" + AuthorityTypeEnum.RECRUITER.toString())) {
+			allAuthorities.stream().forEach((r) -> {
+				if (r.getAuthority().equals("ROLE_" + AuthorityTypeEnum.RECRUITER.toString())
+						|| r.getAuthority().equals("ROLE_" + AuthorityTypeEnum.TEACHER.toString())
+						|| r.getAuthority().equals("ROLE_" + AuthorityTypeEnum.STUDENT.toString())) {
+					assignAuthorities.add(r);
 				}
 			});
-		} else if (roleName.equals("ROLE_" + RoleTypeEnum.TEACHER.toString())) {
-			allRoles.stream().forEach((r) -> {
-				if (r.getName().equals("ROLE_" + RoleTypeEnum.TEACHER.toString())
-						|| r.getName().equals("ROLE_" + RoleTypeEnum.STUDENT.toString())) {
-					assignRoles.add(r);
+		} else if (authorityName.equals("ROLE_" + AuthorityTypeEnum.TEACHER.toString())) {
+			allAuthorities.stream().forEach((r) -> {
+				if (r.getAuthority().equals("ROLE_" + AuthorityTypeEnum.TEACHER.toString())
+						|| r.getAuthority().equals("ROLE_" + AuthorityTypeEnum.STUDENT.toString())) {
+					assignAuthorities.add(r);
 				}
 			});
-		} else if (roleName.equals("ROLE_" + RoleTypeEnum.STUDENT.toString())) {
-			allRoles.stream().forEach((r) -> {
-				if (r.getName().equals("ROLE_" + RoleTypeEnum.STUDENT.toString())) {
-					assignRoles.add(r);
+		} else if (authorityName.equals("ROLE_" + AuthorityTypeEnum.STUDENT.toString())) {
+			allAuthorities.stream().forEach((r) -> {
+				if (r.getAuthority().equals("ROLE_" + AuthorityTypeEnum.STUDENT.toString())) {
+					assignAuthorities.add(r);
 				}
 			});
 		}
-		return assignRoles;
+		return assignAuthorities;
 	}
 
 	@Override
 	public OtpResponseDto otpToEmail(String email) {
 		return otpService.otpToEmail(email, 6);
+	}
+
+	public JwtLoginResponse loginUser(JwtLoginRequest loginRequest) {
+		return this.doAuthenticate(loginRequest);
+	}
+
+	private JwtLoginResponse doAuthenticate(JwtLoginRequest loginRequest) {
+		// Get user from DB or InMemory
+		Authentication authentication;
+
+		try {
+			authentication = authenticationManager.authenticate(
+					new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+
+		} catch (BadCredentialsException e) {
+			throw new CustomException("Invalid username or password", HttpStatus.NOT_FOUND);
+		} catch (AuthenticationException exception) {
+			throw new CustomException("Bad credentials", HttpStatus.BAD_REQUEST);
+		}
+
+		// If user exists than Generate token
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+		UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+		String jwtToken = jwtHelper.generateTokenFromUsername(userDetails);
+
+		List<String> roles = userDetails.getAuthorities().stream().map(item -> item.getAuthority())
+				.collect(Collectors.toList());
+		String firstName = "";
+		String lastName = "";
+		String userEmail = userDetails.getUsername();
+		UserDto userDto = this.getUserByEmail(userEmail);
+		String profileType = userDto.getUserType().getAuthority();
+		profileType = profileType.replace("ROLE_", "").toUpperCase();
+
+		if (profileType.equals(AuthorityTypeEnum.ADMIN.toString())) {
+			AdminProfileDto userProfile = profileManagerService.getUserProfile(userDto, AdminProfileDto.class);
+			firstName = userProfile.getFirstName();
+			lastName = userProfile.getLastName();
+		} else if (profileType.equals(AuthorityTypeEnum.RECRUITER.toString())) {
+			RecruiterProfileDto userProfile = profileManagerService.getUserProfile(userDto, RecruiterProfileDto.class);
+			firstName = userProfile.getFirstName();
+			lastName = userProfile.getLastName();
+		} else if (profileType.equals(AuthorityTypeEnum.TEACHER.toString())) {
+			TeacherProfileDto userProfile = profileManagerService.getUserProfile(userDto, TeacherProfileDto.class);
+			firstName = userProfile.getFirstName();
+			lastName = userProfile.getLastName();
+		} else if (profileType.equals(AuthorityTypeEnum.STUDENT.toString())) {
+			StudentProfileDto userProfile = profileManagerService.getUserProfile(userDto, StudentProfileDto.class);
+			firstName = userProfile.getFirstName();
+			lastName = userProfile.getLastName();
+		}
+
+		JwtLoginResponse response = new JwtLoginResponse();
+		response.setFirstName(firstName);
+		response.setLastName(lastName);
+		response.setUsername(userDetails.getUsername());
+		response.setJwtToken(jwtToken);
+		response.setRoles(roles);
+		response.setSuccess(true);
+		return response;
 	}
 
 	@Override

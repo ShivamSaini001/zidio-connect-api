@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,21 +19,21 @@ import com.zidio.connect.dto.TeacherProfileDto;
 import com.zidio.connect.service.TeacherProfileService;
 
 @RestController
-@RequestMapping("/api/v1/teacher-profile")
+@RequestMapping("/api/v1/teacher/profile")
 public class TeacherProfileController {
 
 	@Autowired
 	TeacherProfileService teacherProfileService;
 
 	@PostMapping("/create/{email}")
-	public ResponseEntity<TeacherProfileDto> createProfile(TeacherProfileDto profileDto, @PathVariable("email") String userEmail) {
+	public ResponseEntity<TeacherProfileDto> createProfile(@RequestBody TeacherProfileDto profileDto, @PathVariable("email") String userEmail) {
 		// userDto should contains email
 		TeacherProfileDto savedProfile = teacherProfileService.createTeacherProfile(profileDto, userEmail);
 		return ResponseEntity.ok(savedProfile);
 	}
 
 	@PutMapping("/update/{email}")
-	public ResponseEntity<TeacherProfileDto> updateProfile(TeacherProfileDto profileDto, @PathVariable("email") String userEmail) {
+	public ResponseEntity<TeacherProfileDto> updateProfile(@RequestBody TeacherProfileDto profileDto, @PathVariable("email") String userEmail) {
 		TeacherProfileDto updatedProfile = teacherProfileService.updateTeacherProfile(profileDto, userEmail);
 		return ResponseEntity.ok(updatedProfile);
 	}

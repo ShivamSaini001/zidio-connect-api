@@ -2,6 +2,8 @@ package com.zidio.connect.exception;
 
 import java.time.LocalDateTime;
 
+import org.springframework.http.HttpStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,20 +12,19 @@ import lombok.ToString;
 
 @Getter
 @Setter
-@ToString
-@NoArgsConstructor
 @AllArgsConstructor
-public class OtpException extends RuntimeException {
+@NoArgsConstructor
+@ToString
+public class CustomException extends RuntimeException {
 
-	private static final long serialVersionUID = 8234761294041252372L;
-	
 	private String message;
-	private boolean success = false;
 	private LocalDateTime timestamp = LocalDateTime.now();
-	private int status;
+	private HttpStatus httpStatus;
 
-	public OtpException(String message, int status) {
+	public CustomException(String message, HttpStatus httpStatus) {
+		super();
 		this.message = message;
-		this.status = status;
+		this.httpStatus = httpStatus;
 	}
+
 }

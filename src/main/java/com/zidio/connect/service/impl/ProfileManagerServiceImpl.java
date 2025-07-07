@@ -1,6 +1,5 @@
 package com.zidio.connect.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.zidio.connect.dto.AdminProfileDto;
@@ -9,7 +8,7 @@ import com.zidio.connect.dto.RecruiterProfileDto;
 import com.zidio.connect.dto.StudentProfileDto;
 import com.zidio.connect.dto.TeacherProfileDto;
 import com.zidio.connect.dto.UserDto;
-import com.zidio.connect.enums.RoleTypeEnum;
+import com.zidio.connect.enums.AuthorityTypeEnum;
 import com.zidio.connect.service.AdminProfileService;
 import com.zidio.connect.service.ProfileManagerService;
 import com.zidio.connect.service.RecruiterProfileService;
@@ -22,22 +21,29 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class ProfileManagerServiceImpl implements ProfileManagerService {
 
-	@Autowired
 	private StudentProfileService studentProfileService;
-	@Autowired
 	private TeacherProfileService teacherProfileService;
-	@Autowired
 	private RecruiterProfileService recruiterProfileService;
-	@Autowired
 	private AdminProfileService adminProfileService;
-	@Autowired
 	private UserService userService;
+
+	// Constructor
+	public ProfileManagerServiceImpl(StudentProfileService studentProfileService,
+			TeacherProfileService teacherProfileService, RecruiterProfileService recruiterProfileService,
+			AdminProfileService adminProfileService, UserService userService) {
+		super();
+		this.studentProfileService = studentProfileService;
+		this.teacherProfileService = teacherProfileService;
+		this.recruiterProfileService = recruiterProfileService;
+		this.adminProfileService = adminProfileService;
+		this.userService = userService;
+	}
 
 	@Override
 	public <T extends ProfileDto> T createUserProfile(String email, T profileDto) {
 		UserDto userDto = userService.getUserByEmail(email);
-		String userType = userDto.getUserType().getName().replace("ROLE_", "").toUpperCase(); // Skip "ROLE_"
-		RoleTypeEnum role = RoleTypeEnum.valueOf(userType);
+		String userType = userDto.getUserType().getAuthority().replace("ROLE_", "").toUpperCase(); // Skip "ROLE_"
+		AuthorityTypeEnum role = AuthorityTypeEnum.valueOf(userType);
 
 		switch (role) {
 		case ADMIN:
@@ -67,8 +73,8 @@ public class ProfileManagerServiceImpl implements ProfileManagerService {
 	@Override
 	public <T extends ProfileDto> T updateUserProfile(String email, T updatedProfileDto) {
 		UserDto userDto = userService.getUserByEmail(email);
-		String userType = userDto.getUserType().getName().replace("ROLE_", "").toUpperCase(); // Skip "ROLE_"
-		RoleTypeEnum role = RoleTypeEnum.valueOf(userType);
+		String userType = userDto.getUserType().getAuthority().replace("ROLE_", "").toUpperCase(); // Skip "ROLE_"
+		AuthorityTypeEnum role = AuthorityTypeEnum.valueOf(userType);
 
 		switch (role) {
 		case ADMIN:
@@ -97,8 +103,8 @@ public class ProfileManagerServiceImpl implements ProfileManagerService {
 
 	@Override
 	public <T extends ProfileDto> T getUserProfile(UserDto userDto, Class<T> profileType) {
-		String userType = userDto.getUserType().getName().replace("ROLE_", "").toUpperCase(); // Skip "ROLE_"
-		RoleTypeEnum role = RoleTypeEnum.valueOf(userType);
+		String userType = userDto.getUserType().getAuthority().replace("ROLE_", "").toUpperCase(); // Skip "ROLE_"
+		AuthorityTypeEnum role = AuthorityTypeEnum.valueOf(userType);
 
 		switch (role) {
 		case ADMIN:
@@ -108,7 +114,8 @@ public class ProfileManagerServiceImpl implements ProfileManagerService {
 			}
 			break;
 		case RECRUITER:
-			RecruiterProfileDto recruiterProfileDto = recruiterProfileService.getRecruiterProfileByEmail(userDto.getEmail());
+			RecruiterProfileDto recruiterProfileDto = recruiterProfileService
+					.getRecruiterProfileByEmail(userDto.getEmail());
 			if (recruiterProfileDto.getClass().equals(profileType)) {
 				return (T) recruiterProfileDto;
 			}
@@ -134,8 +141,8 @@ public class ProfileManagerServiceImpl implements ProfileManagerService {
 	@Override
 	public void deleteUserProfile(String email) {
 		UserDto userDto = userService.getUserByEmail(email);
-		String userType = userDto.getUserType().getName().replace("ROLE_", "").toUpperCase(); // Skip "ROLE_"
-		RoleTypeEnum role = RoleTypeEnum.valueOf(userType);
+		String userType = userDto.getUserType().getAuthority().replace("ROLE_", "").toUpperCase(); // Skip "ROLE_"
+		AuthorityTypeEnum role = AuthorityTypeEnum.valueOf(userType);
 
 		switch (role) {
 		case ADMIN:

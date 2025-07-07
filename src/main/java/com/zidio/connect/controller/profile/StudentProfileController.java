@@ -18,7 +18,7 @@ import com.zidio.connect.dto.StudentProfileDto;
 import com.zidio.connect.service.StudentProfileService;
 
 @RestController
-@RequestMapping("/api/v1/student-profile")
+@RequestMapping("/api/v1/student/profile")
 public class StudentProfileController {
 
 	@Autowired

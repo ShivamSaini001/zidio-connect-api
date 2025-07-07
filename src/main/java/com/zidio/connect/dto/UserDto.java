@@ -2,7 +2,7 @@ package com.zidio.connect.dto;
 
 import java.time.LocalDateTime;
 
-import com.zidio.connect.entities.Role;
+import com.zidio.connect.entities.UserAuthority;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,6 +20,6 @@ public class UserDto {
 	private String email;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
-	private boolean isActivated;
-	private Role userType;
+	private boolean enabled;
+	private UserAuthority userType;
 }

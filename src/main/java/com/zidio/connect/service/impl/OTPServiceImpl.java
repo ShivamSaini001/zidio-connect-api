@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -27,10 +26,15 @@ public class OTPServiceImpl implements OTPService {
 	private static final Long OTP_VALIDITY_IN_MINUTES = 10l; // Time in Minutes
 	private static final Long OTP_RESEND_AFTER_SECONDS = (1 * 60l); // Time in Seconds
 
-	@Autowired
 	private JavaMailSender mailSender;
 
 	private Map<String, VerificationDetails> userEmailVerification = new LinkedHashMap<>();
+
+	// Constructor
+	public OTPServiceImpl(JavaMailSender mailSender) {
+		super();
+		this.mailSender = mailSender;
+	}
 
 	@Setter
 	@Getter

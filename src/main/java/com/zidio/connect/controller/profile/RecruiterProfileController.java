@@ -18,7 +18,7 @@ import com.zidio.connect.dto.RecruiterProfileDto;
 import com.zidio.connect.service.RecruiterProfileService;
 
 @RestController
-@RequestMapping("/api/v1/recruiter-profile")
+@RequestMapping("/api/v1/recruiter/profile")
 public class RecruiterProfileController {
 
 	@Autowired

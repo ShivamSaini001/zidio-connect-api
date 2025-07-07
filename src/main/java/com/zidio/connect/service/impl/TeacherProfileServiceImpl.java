@@ -3,7 +3,6 @@ package com.zidio.connect.service.impl;
 import java.util.List;
 
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.zidio.connect.dto.TeacherProfileDto;
@@ -21,14 +20,18 @@ import jakarta.transaction.Transactional;
 @Service
 public class TeacherProfileServiceImpl implements TeacherProfileService {
 
-	@Autowired
 	TeacherProfileRepository teacherProfileRepo;
-
-	@Autowired
 	UserRepository userRepo;
-
-	@Autowired
 	ModelMapper modelMapper;
+
+	// Constructor
+	public TeacherProfileServiceImpl(TeacherProfileRepository teacherProfileRepo, UserRepository userRepo,
+			ModelMapper modelMapper) {
+		super();
+		this.teacherProfileRepo = teacherProfileRepo;
+		this.userRepo = userRepo;
+		this.modelMapper = modelMapper;
+	}
 
 	@Transactional
 	@Override
@@ -62,24 +65,19 @@ public class TeacherProfileServiceImpl implements TeacherProfileService {
 	public TeacherProfileDto updateTeacherProfile(TeacherProfileDto profileDto, String email) {
 		// fetching teacher profile from database.
 		TeacherProfile teacherProfile = this.getTeacherProfile(email);
-		
-		if(teacherProfile == null) {
-			throw new EntityNotFoundException("Teacher profile does not exists.");
+
+		if (teacherProfile == null) {
+			this.createTeacherProfile(profileDto, email);
+			teacherProfile = this.getTeacherProfile(email);
 		}
-		
+
 		// updating TeacherProfile.
-		teacherProfile.setFirstName(profileDto.getFirstName());
-		teacherProfile.setLastName(profileDto.getLastName());
-		teacherProfile.setBio(profileDto.getBio());
-		teacherProfile.setDateOfBirth(profileDto.getDateOfBirth());
-		teacherProfile.setGender(profileDto.getGender());
-		teacherProfile.setMobile(profileDto.getMobile());
-		teacherProfile.setHighestQualification(profileDto.getHighestQualification());
-		teacherProfile.setSpecialization(profileDto.getSpecialization());
-		teacherProfile.setYearOfExperience(profileDto.getYearOfExperience());
+		TeacherProfile updatedProfile = modelMapper.map(profileDto, TeacherProfile.class);
+		updatedProfile.setUserId(teacherProfile.getUserId());
+		updatedProfile.setUser(teacherProfile.getUser());
 
 		// update into database.
-		TeacherProfile savedTeacherProfile = teacherProfileRepo.save(teacherProfile);
+		TeacherProfile savedTeacherProfile = teacherProfileRepo.save(updatedProfile);
 		TeacherProfileDto teacherProfileDto = modelMapper.map(savedTeacherProfile, TeacherProfileDto.class);
 		teacherProfileDto.setUserDto(modelMapper.map(savedTeacherProfile.getUser(), UserDto.class));
 		return teacherProfileDto;
@@ -90,15 +88,15 @@ public class TeacherProfileServiceImpl implements TeacherProfileService {
 	public void deleteTeacherProfileByEmail(String email) {
 		// fetching teacher profile form db.
 		TeacherProfile teacherProfile = this.getTeacherProfile(email);
-		
+
 		// If teacher profile does not exists.
 		if (teacherProfile == null) {
 			throw new EntityNotFoundException("Teacher profile does not exists.");
 		}
-		
+
 		// extracting user entity.
 		User user = teacherProfile.getUser();
-		
+
 		// updating user entity.
 		user.setTeacherProfile(null);
 		userRepo.save(user);
@@ -118,11 +116,11 @@ public class TeacherProfileServiceImpl implements TeacherProfileService {
 				.orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
 		// Get teacher profile
 		TeacherProfile teacherProfile = user.getTeacherProfile();
-		
-		if(teacherProfile == null) {
+
+		if (teacherProfile == null) {
 			throw new EntityNotFoundException("Profile does not exists!!");
 		}
-		
+
 		// Convert teacher profile.
 		TeacherProfileDto teacherProfileDto = modelMapper.map(teacherProfile, TeacherProfileDto.class);
 		teacherProfileDto.setUserDto(modelMapper.map(user, UserDto.class));

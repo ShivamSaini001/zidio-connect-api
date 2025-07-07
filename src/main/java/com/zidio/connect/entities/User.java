@@ -5,15 +5,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.security.core.userdetails.UserDetails;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -28,7 +32,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Entity
 @Table(name = "users")
-public class User {
+public class User implements UserDetails {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long userId;
@@ -38,15 +42,15 @@ public class User {
 	private String password;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
-	private boolean isActivated = true;
+	private boolean enabled = true;
 
-	@ManyToMany
-	@JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
-	private List<Role> role;
+	@ManyToMany(fetch = FetchType.EAGER)
+	@JoinTable(name = "user_authorities", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "authority_id"))
+	private List<UserAuthority> authorities;
 
-	@OneToOne
+	@ManyToOne
 	@JoinColumn(name = "user_type")
-	private Role userType;
+	private UserAuthority userType;
 
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Education> educations;
@@ -62,12 +66,18 @@ public class User {
 	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private StudentProfile studentProfile;
 
-	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
 	private TeacherProfile teacherProfile;
 
 	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private RecruiterProfile recruiterProfile;
 
-	@OneToOne(mappedBy = "user",cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private AdminProfile adminProfile;
+
+	@Override
+	public String getUsername() {
+		return this.email;
+	}
+
 }

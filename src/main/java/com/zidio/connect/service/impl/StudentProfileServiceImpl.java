@@ -3,7 +3,6 @@ package com.zidio.connect.service.impl;
 import java.util.List;
 
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.zidio.connect.dto.StudentProfileDto;
@@ -21,14 +20,18 @@ import jakarta.transaction.Transactional;
 @Service
 public class StudentProfileServiceImpl implements StudentProfileService {
 
-	@Autowired
 	StudentProfileRepository studentProfileRepo;
-
-	@Autowired
 	UserRepository userRepo;
-
-	@Autowired
 	ModelMapper modelMapper;
+
+	// Constructor
+	public StudentProfileServiceImpl(StudentProfileRepository studentProfileRepo, UserRepository userRepo,
+			ModelMapper modelMapper) {
+		super();
+		this.studentProfileRepo = studentProfileRepo;
+		this.userRepo = userRepo;
+		this.modelMapper = modelMapper;
+	}
 
 	@Transactional
 	@Override

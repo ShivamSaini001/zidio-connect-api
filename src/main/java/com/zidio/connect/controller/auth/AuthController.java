@@ -1,15 +1,17 @@
 package com.zidio.connect.controller.auth;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.zidio.connect.config.security.jwt.dto.JwtLoginRequest;
+import com.zidio.connect.config.security.jwt.dto.JwtLoginResponse;
 import com.zidio.connect.dto.OtpResponseDto;
 import com.zidio.connect.dto.RegistrationRequestDTO;
-import com.zidio.connect.dto.UserDto;
 import com.zidio.connect.service.UserService;
 
 import jakarta.persistence.EntityExistsException;
@@ -18,8 +20,11 @@ import jakarta.persistence.EntityExistsException;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
-	@Autowired
 	UserService userService;
+
+	public AuthController(UserService userService) {
+		this.userService = userService;
+	}
 
 	// ************ User Registration process Start *******************
 	@PostMapping("/email/register-otp")
@@ -34,25 +39,25 @@ public class AuthController {
 	}
 
 	@PostMapping("/register")
-	public ResponseEntity<UserDto> registerUser(RegistrationRequestDTO registrationRequestDto) {
-		UserDto userResponseDto = userService.createUser(registrationRequestDto);
-		return ResponseEntity.ok(userResponseDto);
+	public ResponseEntity<String> registerUser(@RequestBody RegistrationRequestDTO registrationRequestDto) {
+		userService.createUser(registrationRequestDto);
+		return ResponseEntity.ok("Registration Successfully...");
 	}
 	// *********** User Registration Process End ****************
 
-	
-	
 	// ************ Forget Password Start *******************
 
 	// -------------------
 
 	// ************ Forget Password End *********************
 
-	
-	
 	// ************ User Login process Start *******************
 
-	// -------------------
+	@PostMapping("/login")
+	public ResponseEntity<?> login(@RequestBody JwtLoginRequest loginRequest) {
+		JwtLoginResponse loginResponse = userService.loginUser(loginRequest);
+		return ResponseEntity.ok(loginResponse);
+	}
 
 	// ************ User Login Process End *********************
 

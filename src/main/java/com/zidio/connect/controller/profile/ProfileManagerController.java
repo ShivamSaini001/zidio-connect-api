@@ -19,14 +19,14 @@ import com.zidio.connect.dto.RecruiterProfileDto;
 import com.zidio.connect.dto.StudentProfileDto;
 import com.zidio.connect.dto.TeacherProfileDto;
 import com.zidio.connect.dto.UserDto;
-import com.zidio.connect.enums.RoleTypeEnum;
+import com.zidio.connect.enums.AuthorityTypeEnum;
 import com.zidio.connect.service.ProfileManagerService;
 import com.zidio.connect.service.UserService;
 
 import jakarta.persistence.EntityNotFoundException;
 
 @RestController
-@RequestMapping("/api/v1/user-profile")
+@RequestMapping("/api/v1/user/profile")
 public class ProfileManagerController {
 
 	@Autowired
@@ -100,8 +100,8 @@ public class ProfileManagerController {
 	@GetMapping("/get/{email}")
 	public ResponseEntity<ProfileDto> getProfileByEmail(@PathVariable String email) {
 		UserDto userDto = userService.getUserByEmail(email);
-		String userType = userDto.getUserType().getName().replace("ROLE_", "").toUpperCase(); // Skip "ROLE_"
-		RoleTypeEnum role = RoleTypeEnum.valueOf(userType);
+		String userType = userDto.getUserType().getAuthority().replace("ROLE_", "").toUpperCase(); // Skip "ROLE_"
+		AuthorityTypeEnum role = AuthorityTypeEnum.valueOf(userType);
 
 		switch (role) {
 		case ADMIN:
@@ -113,7 +113,7 @@ public class ProfileManagerController {
 		case STUDENT:
 			return ResponseEntity.ok(profileManagerService.getUserProfile(userDto, StudentProfileDto.class));
 		default:
-			throw new EntityNotFoundException("Role does not exists.");
+			throw new EntityNotFoundException("UserAuthority does not exists.");
 		}
 	}
 }

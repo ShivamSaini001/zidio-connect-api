@@ -18,7 +18,7 @@ import com.zidio.connect.dto.AdminProfileDto;
 import com.zidio.connect.service.AdminProfileService;
 
 @RestController
-@RequestMapping("/api/v1/admin-profile")
+@RequestMapping("/api/v1/admin/profile")
 public class AdminProfileController {
 
 	@Autowired
