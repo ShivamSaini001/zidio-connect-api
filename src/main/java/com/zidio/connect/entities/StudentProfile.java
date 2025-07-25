@@ -25,13 +25,20 @@ public class StudentProfile {
 	private Long userId; // Matches users.userId
 	private String firstName;
 	private String lastName;
-	private String bio;
-	private String resumeUrl;
-	private String linkedInUrl;
+	private String tagline;
 	private String gender;
 	private String mobile;
+	private String bio;
+	private String linkedInUrl;
+	private String githubUrl;
 	private LocalDate dateOfBirth;
-	private String profileImageUrl;
+
+	@OneToOne
+	@JoinColumn(name = "profile_image")
+	private CloudinaryFile profileImage;
+	
+	@OneToOne
+	private CloudinaryFile resume;
 
 	@OneToOne
 	@MapsId

@@ -1,35 +1,25 @@
 package com.zidio.connect.entities;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.persistence.*;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 @Entity
 @Table(name = "users")
 public class User implements UserDetails {
@@ -52,21 +42,25 @@ public class User implements UserDetails {
 	@JoinColumn(name = "user_type")
 	private UserAuthority userType;
 
-	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Education> educations;
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "user")
+	private List<Education> educations = new ArrayList<>();
 
-	@ManyToMany(cascade = CascadeType.ALL)
-	@JoinTable(name = "user_skills", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "skill_id"))
-	private Set<Skill> skills = new HashSet<>();
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "user")
+	private Set<Skill> skills;
 
 	@OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
 	@JoinColumn(name = "address_id")
 	private Address address;
 
+	// Resume, Portfolio and Documents.
+	@OneToMany(cascade = CascadeType.ALL)
+	@JoinTable(name = "user_certificates", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "certificate_id"))
+	private List<CloudinaryFile> certificates;
+
 	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private StudentProfile studentProfile;
 
-	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private TeacherProfile teacherProfile;
 
 	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

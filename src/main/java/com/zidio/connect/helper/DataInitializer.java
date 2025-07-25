@@ -23,7 +23,6 @@ public class DataInitializer implements CommandLineRunner {
 	@Override
 	public void run(String... args) {
 		this.initilizeRoles();
-		this.initializeSkills();
 	}
 
 	public void initilizeRoles() {
@@ -36,18 +35,18 @@ public class DataInitializer implements CommandLineRunner {
 		System.out.println("Predefined roles initialized...");
 	}
 
-	public void initializeSkills() {
-		for (UserSkillsEnum skill : UserSkillsEnum.values()) {
-			String name = skill.toString().trim();
-			// Capitalize word here
-			// ............
-
-			skillRepository.findByName(name).orElseGet(() -> {
-				Skill newSkill = new Skill();
-				newSkill.setName(name);
-				return skillRepository.save(newSkill);
-			});
-		}
-		System.out.println("Predefined skills initialized...");
-	}
+//	public void initializeSkills() {
+//		for (UserSkillsEnum skill : UserSkillsEnum.values()) {
+//			String name = skill.toString().trim();
+//			// Capitalize word here
+//			// ............
+//
+//			skillRepository.findByName(name).orElseGet(() -> {
+//				Skill newSkill = new Skill();
+//				newSkill.setName(name);
+//				return skillRepository.save(newSkill);
+//			});
+//		}
+//		System.out.println("Predefined skills initialized...");
+//	}
 }

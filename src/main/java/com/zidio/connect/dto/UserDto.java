@@ -1,7 +1,13 @@
 package com.zidio.connect.dto;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+import com.zidio.connect.entities.Address;
+import com.zidio.connect.entities.Education;
+import com.zidio.connect.entities.Skill;
 import com.zidio.connect.entities.UserAuthority;
 
 import lombok.AllArgsConstructor;

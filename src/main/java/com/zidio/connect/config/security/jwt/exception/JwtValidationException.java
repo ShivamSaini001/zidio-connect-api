@@ -9,10 +9,12 @@ import lombok.ToString;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @ToString
 public class JwtValidationException extends RuntimeException {
 
 	private String message;
 
+	public JwtValidationException(String message){
+		this.message = message;
+	}
 }

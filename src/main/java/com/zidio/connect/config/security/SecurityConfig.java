@@ -51,6 +51,12 @@ public class SecurityConfig {
 
 							.requestMatchers("/api/v1/teacher/**").hasRole(AuthorityTypeEnum.TEACHER.toString())
 
+							.requestMatchers("/api/v1/all/user/skills/**", "/api/v1/all/user/educations/**").hasAnyRole(
+									AuthorityTypeEnum.RECRUITER.toString(),
+									AuthorityTypeEnum.STUDENT.toString(),
+									AuthorityTypeEnum.TEACHER.toString()
+							)
+
 							.anyRequest().authenticated();
 				}).exceptionHandling(ex -> {
 					ex.authenticationEntryPoint(authenticationEntryPoint);

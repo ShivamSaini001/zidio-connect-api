@@ -3,12 +3,7 @@ package com.zidio.connect.entities;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,6 +16,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 @Entity
+@Table(name = "user_skills")
 public class Skill {
 
 	@Id
@@ -30,7 +26,7 @@ public class Skill {
 	@Column(nullable = false, unique = true)
 	private String name;
 
-	@ManyToMany(mappedBy = "skills")
-	private Set<User> users = new HashSet<>();
-
+	@ManyToOne
+	@JoinColumn(name = "userId")
+	private User user;
 }

@@ -29,7 +29,10 @@ public class AdminProfile {
 	private String mobile;
 	private String gender;
 	private LocalDate dateOfBirth;
-	private String profileImageUrl;
+	
+	@OneToOne
+	@JoinColumn(name = "profile_image")
+	private CloudinaryFile profileImage;
 
 	@OneToOne
 	@MapsId

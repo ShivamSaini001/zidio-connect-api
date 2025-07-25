@@ -1,7 +1,12 @@
 package com.zidio.connect.service.impl;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import com.zidio.connect.dto.EducationDto;
+import com.zidio.connect.dto.SkillDto;
+import com.zidio.connect.entities.CloudinaryFile;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -62,6 +67,7 @@ public class StudentProfileServiceImpl implements StudentProfileService {
 		}
 	}
 
+	@Transactional
 	@Override
 	public StudentProfileDto updateStudentProfile(StudentProfileDto profileDto, String email) {
 		// fetching student profile from database.
@@ -72,20 +78,24 @@ public class StudentProfileServiceImpl implements StudentProfileService {
 		}
 		
 		// updating StudentProfile.
-		studentProfile.setFirstName(profileDto.getFirstName());
-		studentProfile.setLastName(profileDto.getLastName());
-		studentProfile.setBio(profileDto.getBio());
-		studentProfile.setDateOfBirth(profileDto.getDateOfBirth());
-		studentProfile.setGender(profileDto.getGender());
-		studentProfile.setMobile(profileDto.getMobile());
-		studentProfile.setLinkedInUrl(profileDto.getLinkedInUrl());
-		studentProfile.setResumeUrl(profileDto.getResumeUrl());
-		// update into database.
-		StudentProfile savedStudentProfile = studentProfileRepo.save(studentProfile);
+		StudentProfile updatedProfile = modelMapper.map(profileDto, StudentProfile.class);
+		updatedProfile.setUserId(studentProfile.getUserId());
+		updatedProfile.setUser(studentProfile.getUser());
+		updatedProfile.setProfileImage(studentProfile.getProfileImage());
+		updatedProfile.setResume(studentProfile.getResume());
 
-		StudentProfileDto studentProfileDto = modelMapper.map(savedStudentProfile, StudentProfileDto.class);
-		studentProfileDto.setUserDto(modelMapper.map(savedStudentProfile.getUser(), UserDto.class));
-		return studentProfileDto;
+		// Save profile
+		studentProfileRepo.save(updatedProfile);
+
+		// Update user Entity.
+		User user = studentProfile.getUser();
+		user.setUpdatedAt(LocalDateTime.now());
+		if(profileDto.getAddress() != null)
+			user.setAddress(profileDto.getAddress());
+
+		// update into database.
+		userRepo.save(user);
+		return this.getStudentProfileByEmail(email);
 	}
 
 	@Transactional
@@ -125,6 +135,19 @@ public class StudentProfileServiceImpl implements StudentProfileService {
 		
 		StudentProfileDto studentProfileDto = modelMapper.map(studentProfile, StudentProfileDto.class);
 		studentProfileDto.setUserDto(modelMapper.map(user, UserDto.class));
+
+		CloudinaryFile profileImage = studentProfile.getProfileImage();
+		CloudinaryFile resume = studentProfile.getResume();
+		if(profileImage != null){
+			studentProfileDto.setProfileImageUrl(profileImage.getSecureUrl());
+		}
+		if(resume != null){
+			studentProfileDto.setResumeUrl(resume.getSecureUrl());
+		}
+
+		studentProfileDto.setEducations(user.getEducations().stream().map((edu) -> modelMapper.map(edu, EducationDto.class)).toList());
+		studentProfileDto.setSkills(user.getSkills().stream().map((skill) -> modelMapper.map(skill, SkillDto.class)).collect(Collectors.toSet()));
+		studentProfileDto.setAddress(user.getAddress());
 		return studentProfileDto;
 	}
 
@@ -135,17 +158,22 @@ public class StudentProfileServiceImpl implements StudentProfileService {
 		User user = studentProfile.getUser();
 		// Convert Entities into DTO.
 		StudentProfileDto studentProfileDto = modelMapper.map(studentProfile, StudentProfileDto.class);
-		UserDto userDto = modelMapper.map(user, UserDto.class);
-		studentProfileDto.setUserDto(userDto);
+		studentProfileDto.setUserDto(modelMapper.map(user, UserDto.class));
+		studentProfileDto.setEducations(user.getEducations().stream().map((edu) -> modelMapper.map(edu, EducationDto.class)).toList());
+		studentProfileDto.setSkills(user.getSkills().stream().map((skill) -> modelMapper.map(skill, SkillDto.class)).collect(Collectors.toSet()));
+		studentProfileDto.setAddress(user.getAddress());
 		return studentProfileDto;
 	}
 
 	@Override
 	public List<StudentProfileDto> getAllStudentProfiles() {
 		return studentProfileRepo.findAll().stream().map((studentProfile) -> {
+			User user = studentProfile.getUser();
 			StudentProfileDto studentProfileDto = modelMapper.map(studentProfile, StudentProfileDto.class);
-			UserDto userDto = modelMapper.map(studentProfile.getUser(), UserDto.class);
-			studentProfileDto.setUserDto(userDto);
+			studentProfileDto.setUserDto(modelMapper.map(user, UserDto.class));
+			studentProfileDto.setEducations(user.getEducations().stream().map((edu) -> modelMapper.map(edu, EducationDto.class)).toList());
+			studentProfileDto.setSkills(user.getSkills().stream().map((skill) -> modelMapper.map(skill, SkillDto.class)).collect(Collectors.toSet()));
+			studentProfileDto.setAddress(user.getAddress());
 			return studentProfileDto;
 		}).toList();
 	}

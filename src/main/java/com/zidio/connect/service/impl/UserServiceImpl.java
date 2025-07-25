@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.zidio.connect.entities.*;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -29,12 +30,6 @@ import com.zidio.connect.dto.RegistrationRequestDTO;
 import com.zidio.connect.dto.StudentProfileDto;
 import com.zidio.connect.dto.TeacherProfileDto;
 import com.zidio.connect.dto.UserDto;
-import com.zidio.connect.entities.AdminProfile;
-import com.zidio.connect.entities.RecruiterProfile;
-import com.zidio.connect.entities.StudentProfile;
-import com.zidio.connect.entities.TeacherProfile;
-import com.zidio.connect.entities.User;
-import com.zidio.connect.entities.UserAuthority;
 import com.zidio.connect.enums.AuthorityTypeEnum;
 import com.zidio.connect.exception.CustomException;
 import com.zidio.connect.repository.AdminProfileRepository;
@@ -108,6 +103,7 @@ public class UserServiceImpl implements UserService {
 				User newUser = modelMapper.map(registrationRequestDto, User.class);
 				newUser.setCreatedAt(LocalDateTime.now());
 				newUser.setUpdatedAt(LocalDateTime.now());
+				newUser.setAddress(new Address());
 
 				// Assign profile type to user.
 				UserAuthority userAuthority = userAuthorityService
@@ -300,6 +296,13 @@ public class UserServiceImpl implements UserService {
 				.orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
 		UserDto responseDTO = modelMapper.map(user, UserDto.class);
 		return responseDTO;
+	}
+	
+	@Override
+	public Long getUserIdByEmail(String email) {
+		User user = userRepo.findByEmail(email)
+				.orElseThrow(() -> new EntityNotFoundException("User does not exists!!"));
+		return user.getUserId();
 	}
 
 	@Override

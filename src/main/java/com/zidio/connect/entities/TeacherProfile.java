@@ -3,13 +3,16 @@ package com.zidio.connect.entities;
 import java.time.LocalDate;
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
@@ -35,7 +38,6 @@ public class TeacherProfile {
 	private String gender;
 	private LocalDate dateOfBirth;
 	private String bio;
-	private String profileImageUrl;
 	private String linkedinProfileUrl;
 
 	// Professional Details
@@ -68,12 +70,10 @@ public class TeacherProfile {
 	@Column(name = "preferredStudentLevel")
 	private List<String> preferredStudentLevel;
 
-	// Resume, Portfolio and Documents.
-	@ElementCollection
-	@CollectionTable(name = "certificate_urls", joinColumns = @JoinColumn(name = "teacher_id"), uniqueConstraints = @UniqueConstraint(columnNames = {
-			"teacher_id", "certificateUrl" }))
-	@Column(name = "certificateUrl")
-	private List<String> certificateUrls;
+	@OneToOne(cascade = CascadeType.ALL)
+	@JoinColumn(name = "profile_image")
+	private CloudinaryFile profileImage;
+
 	private String portfolioWebsiteUrl;
 
 	// System fields

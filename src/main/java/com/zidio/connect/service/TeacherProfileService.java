@@ -1,8 +1,10 @@
 package com.zidio.connect.service;
 
 import java.util.List;
+import java.util.Map;
 
 import com.zidio.connect.dto.TeacherProfileDto;
+import com.zidio.connect.entities.CloudinaryFile;
 
 public interface TeacherProfileService {
 
@@ -18,4 +20,15 @@ public interface TeacherProfileService {
 
 	List<TeacherProfileDto> getAllTeacherProfiles();
 
+	CloudinaryFile updateProfileImageDetails(String email, CloudinaryFile profileDetails);
+
+	Map<String, Object> getProfileImage(String email);
+	
+	void uploadCertificate(String email, CloudinaryFile certificateDetails);
+
+	List<CloudinaryFile> getAllCertificates(String email);
+
+	CloudinaryFile deleteCertificateById(String email, Long certificateId);
+
+	
 }

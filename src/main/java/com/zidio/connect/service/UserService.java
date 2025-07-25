@@ -19,4 +19,5 @@ public interface UserService {
 	UserDto getUserByEmail(String email);
 	boolean isUserExists(String email);
 	List<UserDto> getAllUsers();
+	Long getUserIdByEmail(String email);
 }

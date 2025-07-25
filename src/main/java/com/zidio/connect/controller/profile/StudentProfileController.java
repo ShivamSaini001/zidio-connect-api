@@ -4,15 +4,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.zidio.connect.config.security.jwt.JwtHelper;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.zidio.connect.dto.StudentProfileDto;
 import com.zidio.connect.service.StudentProfileService;
@@ -24,6 +20,9 @@ public class StudentProfileController {
 	@Autowired
 	StudentProfileService studentProfileService;
 
+	@Autowired
+	private JwtHelper jwtHelper;
+
 	@PostMapping("/create/{email}")
 	public ResponseEntity<StudentProfileDto> createProfile(StudentProfileDto profileDto, @PathVariable("email") String userEmail) {
 		// userDto should contains email
@@ -31,14 +30,20 @@ public class StudentProfileController {
 		return ResponseEntity.ok(savedProfile);
 	}
 
-	@PutMapping("/update/{email}")
-	public ResponseEntity<StudentProfileDto> updateProfile(StudentProfileDto profileDto, @PathVariable("email") String userEmail) {
-		StudentProfileDto updatedStudentProfile = studentProfileService.updateStudentProfile(profileDto, userEmail);
+	@PutMapping("/update")
+	public ResponseEntity<StudentProfileDto> updateProfile(@RequestBody StudentProfileDto profileDto, HttpServletRequest request) {
+		// Get email from jwt token
+		String email = jwtHelper.getUsernameFromJwtToken(jwtHelper.getJwtTokenFromHeader(request));
+
+		StudentProfileDto updatedStudentProfile = studentProfileService.updateStudentProfile(profileDto, email);
 		return ResponseEntity.ok(updatedStudentProfile);
 	}
 
-	@DeleteMapping("/delete/{email}")
-	public ResponseEntity<Map<String, Object>> deleteProfile(@PathVariable String email) {
+	@DeleteMapping("/delete")
+	public ResponseEntity<Map<String, Object>> deleteProfile(HttpServletRequest request) {
+		// Get email from jwt token
+		String email = jwtHelper.getUsernameFromJwtToken(jwtHelper.getJwtTokenFromHeader(request));
+
 		studentProfileService.deleteStudentProfileByEmail(email);
 		Map<String, Object> response = new LinkedHashMap<>();
 		response.put("Response Message: ", "Student profile successfully deleted...");
@@ -51,8 +56,11 @@ public class StudentProfileController {
 		return ResponseEntity.ok(studentProfile);
 	}
 
-	@GetMapping("/get/email/{email}")
-	public ResponseEntity<StudentProfileDto> getProfileByEmail(@PathVariable String email) {
+	@GetMapping("/get/email")
+	public ResponseEntity<StudentProfileDto> getProfileByEmail(HttpServletRequest request) {
+		// Get email from jwt token
+		String email = jwtHelper.getUsernameFromJwtToken(jwtHelper.getJwtTokenFromHeader(request));
+
 		StudentProfileDto studentProfile = studentProfileService.getStudentProfileByEmail(email);
 		return ResponseEntity.ok(studentProfile);
 	}

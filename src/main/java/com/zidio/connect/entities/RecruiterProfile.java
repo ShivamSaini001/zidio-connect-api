@@ -32,7 +32,10 @@ public class RecruiterProfile {
 	private long totalPostedJobs;
 	private long totalPostedInternships;
 	private String designation; // Hr Manager, Technical Recruiter
-	private String profileImageUrl;
+	
+	@OneToOne
+	@JoinColumn(name = "profile_image")
+	private CloudinaryFile profileImage;
 		
 	@OneToOne
 	@MapsId
